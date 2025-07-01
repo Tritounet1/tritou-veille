@@ -54,8 +54,6 @@ func sendMail(to string, blogs []map[string]interface{}) {
 			"\r\n"+
 			"<html><body style=\"font-family:Arial,sans-serif; color:#333; margin: 0; padding: 20px;\">\r\n"+
 			"<div style=\"max-width: 800px; margin: 0 auto; background: #f9f9f9; padding: 20px; border-radius: 8px;\">\r\n"+
-			"<h1 style=\"color:#007BFF; text-align: center; margin-bottom: 30px;\">🎮 Actualités Gaming</h1>\r\n"+
-			"<p style=\"text-align: center; color: #666; margin-bottom: 30px;\">Voici les dernières actualités récupérées depuis <strong>ActuGaming.net</strong></p>\r\n"+
 			"<table style=\"width: 100%%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1);\">\r\n"+
 			"<thead>\r\n"+
 			"<tr style=\"background: #007BFF; color: white;\">\r\n"+
