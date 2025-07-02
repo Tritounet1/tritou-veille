@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"tidy/ent"
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
@@ -73,98 +74,23 @@ func GetPagePremium(link string) string {
 	return html
 }
 
-func scrapeActuGaming() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Erreur lors du chargement du .env")
-	}
-
-	sendTo := os.Getenv("SEND_TO")
-	
-	link := "https://www.actugaming.net/actualites/"
-
-	html := GetPage(link)
-
-	/*
-    err := os.WriteFile("index.html", []byte(html), 0644)
-    if err != nil {
-		log.Fatal(err)
-	}
-	*/
-
-	doc, err := goquery.NewDocumentFromReader(strings.NewReader(html))
-    if err != nil {
-        log.Fatal(err)
-    }
-
-	lastBlogs := make([]map[string]interface{}, 0)
-
-    doc.Find("div.p-l-card__container").Each(func(i int, s *goquery.Selection) {
-		data := map[string]interface{}{
-			"title":    s.Find("h3").Text(),
-			"description":   s.Find("p.tw-text-base").Text(),
-			"image": func() string {
-				src, _ := s.Find("img.h-thumbnail__image").Attr("src")
-				return src
-			}(),
-			"time": s.Find("time.tw-text-sm").Text(),
-			"link": func() string {
-				src, _ := s.Find("a.stretched-link").Attr("href")
-				return src
-			}(),
-		}
-	
-		/*
-		jsonData, err := json.Marshal(data)
-		if err != nil {
-			fmt.Printf("could not marshal json: %s\n", err)
-			return
-		}
-	
-		fmt.Printf("json data: %s\n", jsonData)
-		*/
-
-		lastBlogs = append(lastBlogs, data)
-    })
-
-	// Envoi de l'e-mail avec les données des blogs
-	sendMail(sendTo, lastBlogs)
-
-	// Sauvegarder le tableau complet dans un fichier JSON bien formaté
-	/*
-	jsonData, err := json.MarshalIndent(lastBlogs, "", "  ")
-	if err != nil {
-		log.Fatal("Erreur lors de la sérialisation JSON:", err)
-	}
-
-	err = os.WriteFile("blogs.json", jsonData, 0644)
-	if err != nil {
-		log.Fatal("Erreur lors de l'écriture du fichier:", err)
-	}
-
-	fmt.Printf("Données sauvegardées dans blogs.json (%d articles)\n", len(lastBlogs))
-	*/
-}
-
 func extractHostname(link string) (hostname string) {
 	return strings.Split(link, "/")[1]
 }
 
-func personalScraper(scraperDetails scraper) {
+func personalScraper(scraperDetails *ent.Scraper) {
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Erreur lors du chargement du .env")
 	}
-
-	sendTo := os.Getenv("SEND_TO")
 	
-	link := scraperDetails.link
+	link := scraperDetails.Link
 
 	hostName := extractHostname(link)
 
 	var html string
 
-	if(scraperDetails.premium) {
+	if(scraperDetails.Premium) {
 		html = GetPagePremium(link)
 	} else {
 		html = GetPage(link)
@@ -182,19 +108,22 @@ func personalScraper(scraperDetails scraper) {
 
 	lastBlogs := make([]map[string]interface{}, 0)
 
-    doc.Find(scraperDetails.schema.container).Each(func(i int, s *goquery.Selection) {
+    doc.Find(scraperDetails.Edges.Schema.Container).Each(func(i int, s *goquery.Selection) {
 		data := map[string]interface{}{
-			"title":    s.Find(scraperDetails.schema.title).Text(),
-			"description":   s.Find(scraperDetails.schema.description).Text(),
+			"title":    s.Find(scraperDetails.Edges.Schema.Title).Text(),
+			"description":   s.Find(scraperDetails.Edges.Schema.Description).Text(),
 			"image": func() string {
-				src, _ := s.Find(scraperDetails.schema.image).Attr("src")
+				src, _ := s.Find(scraperDetails.Edges.Schema.Image).Attr("src")
+				if(!strings.Contains(src, "https")) {
+					src = "https://" + hostName + "/" + src
+				}
 				return src
 			}(),
-			"time": s.Find(scraperDetails.schema.time).Text(),
+			"time": s.Find(scraperDetails.Edges.Schema.Time).Text(),
 			"link": func() string {
-				src, _ := s.Find(scraperDetails.schema.link).Attr("href")
+				src, _ := s.Find(scraperDetails.Edges.Schema.Link).Attr("href")
 				if(!strings.Contains(src, "https")) {
-					src = hostName + src
+					src = "https://" + hostName + "/" + src
 				}
 				return src
 			}(),
@@ -202,5 +131,25 @@ func personalScraper(scraperDetails scraper) {
 		lastBlogs = append(lastBlogs, data)
     })
 
-	sendMail(sendTo, lastBlogs)
+	users := getUsers()
+
+	for _, u := range users {
+		sendMail(u.Email, lastBlogs)
+	}
+
+
+	// Sauvegarder le tableau complet dans un fichier JSON bien formaté
+	/*
+	jsonData, err := json.MarshalIndent(lastBlogs, "", "  ")
+	if err != nil {
+		log.Fatal("Erreur lors de la sérialisation JSON:", err)
+	}
+
+	err = os.WriteFile("blogs.json", jsonData, 0644)
+	if err != nil {
+		log.Fatal("Erreur lors de l'écriture du fichier:", err)
+	}
+
+	fmt.Printf("Données sauvegardées dans blogs.json (%d articles)\n", len(lastBlogs))
+	*/
 }

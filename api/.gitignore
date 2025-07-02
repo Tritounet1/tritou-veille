@@ -1,5 +1,9 @@
 .env
-blogs.json
-index.html
 TODO.md
 *.exe
+test.db
+
+# Ignorer tous les fichiers générés d'ent sauf les schémas
+/ent/*
+!/ent/schema
+!/ent/schema/**

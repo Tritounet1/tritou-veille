@@ -10,6 +10,20 @@ C'est un projet créé pour mettre en place un système qui collecte des informa
 
 ## Usage
 
+Créer une entité :
+
+```bash
+go new entityName
+```
+
+Générer les entités :
+
+```bash
+go run entgo.io/ent/cmd/ent generate ./ent/schema
+```
+
+Lancer l'application :
+
 ```bash
 go run .
 ```
