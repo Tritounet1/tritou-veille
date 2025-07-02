@@ -104,7 +104,7 @@ func seedData() {
 
 	jobActuGaming, err := client.CronJob.Create().
 		SetName("Job Actu Gaming").
-		SetTime("@every 10h00ms").
+		SetTime("@every 10h00m00s").
 		SetNewsletter(gamingNewsletter).
 		AddScrapers(actuGamingScraper).
 		Save(ctx)
@@ -149,9 +149,9 @@ func seedData() {
 	log.Printf("👤 Créé %d User", 1)
 	log.Printf("📋 Détails:")
 	log.Printf("   - Newsletter: %s (ID: %d)", gamingNewsletter.Name, gamingNewsletter.ID)
-	log.Printf("   - Job Actu Gaming (ID: %d) → Scraper: %s", jobActuGaming.ID, actuGamingScraper.Name)
-	log.Printf("   - Job Jeux vidéo (ID: %d) → Scraper: %s", jobJeuxVideo.ID, jeuxVideoScraper.Name)
-	log.Printf("   - Job Jeux Actu (ID: %d) → Scraper: %s", jobJeuxActu.ID, jeuxActuScraper.Name)
+	log.Printf("   - Job Actu Gaming (ID: %d)", jobActuGaming.ID)
+	log.Printf("   - Job Jeux vidéo (ID: %d)", jobJeuxVideo.ID)
+	log.Printf("   - Job Jeux Actu (ID: %d)", jobJeuxActu.ID)
 	log.Printf("   - User: %s (ID: %d)", user.Email, user.ID)
 }
 

@@ -28,5 +28,6 @@ func startCron() {
 	c.Start()
  
 	// Keep the main program running
-	select {}
+	// select {}
+	// décommenter si avec gin ça ne marche pas.
  }

@@ -19,13 +19,22 @@ func main() {
 			log.Printf("  go run .          - Lance l'application normale")
 			log.Printf("  go run . seed     - Initialise la base avec les données de test")
 			log.Printf("  go run . clear    - Supprime toutes les données")
-			log.Printf("  go run . start-cron     - Lance les cron jobs")
+			log.Printf("  go run . test     - Teste les relations")
+			log.Printf("  go run . server   - Lance seulement le serveur API")
+			log.Printf("  go run . start-cron - Lance seulement les cron jobs")
 			log.Printf("  go run . help     - Affiche cette aide")
 			return
-		case "start-cron": 
+		case "server":
+			log.Printf("Lancement du serveur API")
+			startServer()
+			return
+		case "start-cron":
 			log.Printf("Lancement des Cron Jobs")
 			startCron()
 			return
 		}
 	}
+	return
+	startCron()
+	startServer()
 }

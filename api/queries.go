@@ -80,7 +80,9 @@ func getUsers() ([]*ent.User) {
 		log.Fatalf("failed creating schema resources: %v", err)
 	}
 
-	users, err := client.User.Query().All(ctx)
+	users, err := client.User.Query().
+		WithNewsletter().
+		All(ctx)
 	if err != nil {
 		log.Fatalf("failed querying users: %v", err)
 	}
@@ -102,6 +104,7 @@ func getCronJobs() ([]*ent.CronJob) {
 	}
 
 	cronJobs, err := client.CronJob.Query().
+		WithNewsletter().
 		WithScrapers(func(q *ent.ScraperQuery) {
 			q.WithSchema()  // Charge aussi les schemas des scrapers
 		}).
