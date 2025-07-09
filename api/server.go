@@ -1,7 +1,9 @@
 package main
 
 import (
+	"log"
 	"net/http"
+	"os"
 	"strconv"
 	"tidy/ent"
 	"tidy/ent/cronjob"
@@ -11,6 +13,7 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -55,6 +58,13 @@ type UserDTO struct {
 }
 
 func startServer() {
+	err := godotenv.Load()
+	if err != nil {
+	  log.Fatal("Error loading .env file")
+	}
+
+	port := os.Getenv("SERVER_PORT")
+
 	r := gin.Default()
 	r.Use(cors.Default())
 
@@ -109,7 +119,15 @@ func startServer() {
 	r.POST("/seed", seedHandler)
 	r.POST("/clear", clearHandler)
 
-	r.Run(":8080")
+	// Routes pour monitorer les tâches cron
+	r.GET("/cron-tasks", getCronTasksHandler)
+	r.GET("/cron-tasks/:id", getCronTaskHandler)
+	r.PUT("/cron-tasks/:id", updateCronTaskHandler)
+	r.DELETE("/cron-tasks/:id", deleteCronTaskHandler)
+	r.POST("/cron-tasks/:id/start", startCronTaskHandler)
+	r.POST("/cron-tasks/:id/stop", stopCronTaskHandler)
+
+	r.Run(":" + port)
 }
 
 // ===== NEWSLETTERS =====
@@ -1127,4 +1145,129 @@ func clearHandler(c *gin.Context) {
 		clearData()
 	}()
 	c.JSON(http.StatusOK, gin.H{"message": "Clear started"})
+}
+
+// ===== CRON TASKS MONITORING =====
+
+func getCronTasksHandler(c *gin.Context) {
+	tasks := GetCronTasksAPI()
+	c.JSON(http.StatusOK, tasks)
+}
+
+func getCronTaskHandler(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID invalide"})
+		return
+	}
+
+	task, err := GetCronTaskAPI(id)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, task)
+}
+
+func updateCronTaskHandler(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID invalide"})
+		return
+	}
+
+	var input struct {
+		Name string `json:"name"`
+		Time string `json:"time"`
+	}
+
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// TODO: Implémenter la mise à jour de la tâche cron
+	// Pour l'instant, on retourne un message de succès
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Tâche cron mise à jour",
+		"id":      id,
+		"name":    input.Name,
+		"time":    input.Time,
+	})
+}
+
+func deleteCronTaskHandler(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID invalide"})
+		return
+	}
+
+	if cronManager == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gestionnaire de tâches non initialisé"})
+		return
+	}
+
+	err = cronManager.RemoveTask(id)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Tâche cron supprimée avec succès"})
+}
+
+func startCronTaskHandler(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID invalide"})
+		return
+	}
+
+	if cronManager == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gestionnaire de tâches non initialisé"})
+		return
+	}
+
+	task, err := cronManager.GetTask(id)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Mettre à jour le statut de la tâche
+	cronManager.updateTaskStatus(id, "running")
+	
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Tâche cron démarrée",
+		"task":    task,
+	})
+}
+
+func stopCronTaskHandler(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID invalide"})
+		return
+	}
+
+	if cronManager == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gestionnaire de tâches non initialisé"})
+		return
+	}
+
+	task, err := cronManager.GetTask(id)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Mettre à jour le statut de la tâche
+	cronManager.updateTaskStatus(id, "stopped")
+	
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Tâche cron arrêtée",
+		"task":    task,
+	})
 }

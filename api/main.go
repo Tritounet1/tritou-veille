@@ -21,20 +21,19 @@ func main() {
 			log.Printf("  go run . clear    - Supprime toutes les données")
 			log.Printf("  go run . test     - Teste les relations")
 			log.Printf("  go run . server   - Lance seulement le serveur API")
-			log.Printf("  go run . start-cron - Lance seulement les cron jobs")
+			log.Printf("  go run . cron - Lance seulement les cron jobs")
 			log.Printf("  go run . help     - Affiche cette aide")
 			return
 		case "server":
 			log.Printf("Lancement du serveur API")
 			startServer()
 			return
-		case "start-cron":
+		case "cron":
 			log.Printf("Lancement des Cron Jobs")
 			startCron()
-			return
+			select {}
 		}
 	}
-	return
 	startCron()
 	startServer()
 }
